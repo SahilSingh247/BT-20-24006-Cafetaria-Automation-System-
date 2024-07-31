@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Typography, createTheme } from '@mui/material';
 import EastIcon from '@mui/icons-material/East';
 import { ThemeProvider } from '@mui/material/styles';
@@ -6,7 +6,6 @@ import { green } from '@mui/material/colors';
 import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
-import { useState } from 'react';
 
 import Empty_Cart from '../general_compo/empty_cart.png';
 
@@ -61,23 +60,37 @@ const CartContent = (props) => {
 
   // Filter out null values from the cartItems array
   cartItems = cartItems.filter((item) => item !== null);
-  const [isdone, setisdone] = useState(false);
+  const [isDone, setIsDone] = useState(false);
+
   const loadAndRunScript = () => {
+    if (document.getElementById('razorpay-script')) {
+      return; // Prevent reloading the script if it already exists
+    }
+    
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/payment-button.js';
     script.setAttribute('data-payment_button_id', 'pl_HixkxnGbooqfrB');
     script.async = true;
+    script.id = 'razorpay-script'; // Assign an ID to the script element
+
     script.onload = () => {
       console.log('Razorpay script loaded successfully');
-      // Additional logic after script is loaded, if needed
+      setIsDone(true);
     };
+
+    script.onerror = () => {
+      console.error('Failed to load Razorpay script');
+    };
+
     document.getElementById('razorpay-form').appendChild(script);
-    setisdone(true);
+    setIsDone(true);
   };
 
   const handleButtonClick = () => {
     loadAndRunScript();
-    if(isdone)props.payment(props.cartDetails.id);
+    if(isDone){
+      props.payment(props.cartDetails.id);
+    }
   };
 
   return (
@@ -148,10 +161,9 @@ const CartContent = (props) => {
                   endIcon={<EastIcon />}
                   onClick={handleButtonClick}
                 >
-                  Continue to Payment
+                  {!isDone ? 'Continue to Payment' : 'Checkout'}
                 </Button>
               </form>
-              <Button variant='contained' sx={{ borderRadius: '30px', margin: '20px 0px 5px 0px', width: '300px', padding: '10px' }} endIcon={<EastIcon />} onClick={() => (props.payment(props.cartDetails.id))}>Continue to Payment</Button>
             </div>
           </div>
         </div>
