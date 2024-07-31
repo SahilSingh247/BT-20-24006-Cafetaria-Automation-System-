@@ -28,7 +28,7 @@ class Profile(models.Model):
 class canteen(models.Model):
     owner = models.OneToOneField(Profile,null=True,on_delete=models.CASCADE)
     canteen_id = models.AutoField(primary_key=True)
-    is_verified=models.BooleanField(default=False)
+    is_verified=models.BooleanField(default=True)
     def __str__(self):
         return self.owner.name
 
@@ -53,6 +53,8 @@ class items(models.Model):
     desc = models.TextField()
     price = models.IntegerField(null=False)
     available=models.BooleanField(default=True)
+    rating=models.FloatField(default=0)
+    feedback_cnt=models.IntegerField(default=0)
     def __str__(self):
         return self.name
     
@@ -83,3 +85,4 @@ class feedback(models.Model):
     order_id = models.ForeignKey(orders,null=False,on_delete=models.CASCADE)
     review = models.TextField(max_length=200)
     rating = models.IntegerField(null=True)
+    item_rating = models.JSONField(default=list)
