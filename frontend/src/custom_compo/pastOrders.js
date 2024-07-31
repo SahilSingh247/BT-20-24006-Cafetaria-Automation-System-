@@ -22,16 +22,19 @@ function PastOrder({ id, totalAmount, name, items = [], feedback = [], changeFee
 
   const handleRatingChange = (event, newRating) => {
     const feedbackItem = feedback.find(item => item.order_id === id) || {};
-    changeFeedBack(id, feedbackItem.feedback || '', newRating);
+    changeFeedBack(id, feedbackItem.feedback || '', newRating, itemRatings);
   };
 
   const handleItemRatingChange = (itemId, newRating) => {
-    setItemRatings(prevRatings => ({
-      ...prevRatings,
-      [itemId]: newRating
-    }));
-    // Update item rating in parent component
-    changeFeedBack(id, feedback.find(item => item.order_id === id)?.feedback || '', itemRatings);
+    setItemRatings(prevRatings => {
+      const updatedRatings = {
+        ...prevRatings,
+        [itemId]: newRating
+      };
+      // Update item rating in parent component
+      changeFeedBack(id, feedback.find(item => item.order_id === id)?.feedback || '', feedback.find(item => item.order_id === id)?.rating || 0, updatedRatings);
+      return updatedRatings;
+    });
   };
 
   // Filter items to only show those with quantity > 0
@@ -59,7 +62,7 @@ function PastOrder({ id, totalAmount, name, items = [], feedback = [], changeFee
                   <Typography variant='body2'>Rating:</Typography>
                   <Rating
                     name={`item-rating-${item.id}`}
-                    value={itemRatings[item.id] }
+                    value={itemRatings[item.id]}
                     onChange={(event, newValue) => handleItemRatingChange(item.id, newValue)}
                   />
                 </Box>
