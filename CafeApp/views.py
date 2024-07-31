@@ -251,6 +251,7 @@ class GetItems(APIView):
                name = request.data.get("name")
                desc = request.data.get("desc")
                price = request.data.get("price")
+
                item_obj=items.objects.filter(name=name,price=price,canteen=canteen_obj).first()
                if(item_obj is None):
                 items.objects.create(canteen=canteen_obj,price=price,name=name,desc=desc)
@@ -315,17 +316,15 @@ class getaccountdetails(APIView):
         customer_obj=customer.objects.filter(cust=customer_obj_profile).first()
         if customer_obj is None:
             type="Canteen"
-        else:
-            type="Customer"
         Cust_serialized=AccountDetailsSerializer(customer_obj_profile)
         final_obj={}
         for i in Cust_serialized.data:
             print(Cust_serialized[i])
             final_obj[i]=Cust_serialized[i].value
         k=orders.objects.filter(order_cust=customer_obj).count()
-        if type=="Customer":
-            final_obj["total_orders"]=k
-        final_obj["type"]=type
+        # if type=="Customer":
+        #     final_obj["total_orders"]=k
+        # final_obj["type"]=type
         return Response(final_obj,status=status.HTTP_200_OK)
 
 class getPendingOrders(APIView):
@@ -447,6 +446,7 @@ class GetFeedback(APIView):
         order_id=request.data.get('order_id')
         fd=request.data.get('feedback')
         rating=request.data.get('rating')
+        item_rating=request.data.get('item_rating')
         order_obj=orders.objects.filter(id=order_id).first()
         if(request.user == order_obj.order_cust.cust.user):
             feedback_obj=feedback.objects.create(order_id=order_obj,review=fd,rating=rating)
@@ -475,6 +475,14 @@ class GetFeedback(APIView):
                 if i["id"] not in fed_orders:
                     final_list.append(i)
             print(fed_orders)
+            print(item_rating)
+            for item_id,rating_given in item_rating.items():
+                item_obj=items.objects.filter(id=item_id).first()
+                item_obj.feedback_cnt=item_obj.feedback_cnt+1
+                print(item_obj.rating)
+                item_obj.rating = item_obj.rating + rating_given
+                item_obj.save()
+
             return Response(final_list,status=status.HTTP_200_OK)
         return Response({"success":False})
     def get(self,request):
@@ -507,12 +515,10 @@ class GetFeedback(APIView):
 
 class GetAllFeedback(APIView):
     def get(self,request,canteen_id):
-        if(request.user.profile.type!="Supervisor"):
-            return Response({"success":False})
         final_list=[]
         feedback_obj=feedback.objects.filter(order_id__order_canteen__canteen_id=canteen_id)
         for i in feedback_obj:
-            final_list.append({"order_id":i.order_id.id,"feedback":i.review})
+            final_list.append({"order_id":i.order_id.id,"feedback":i.review,"rating":i.rating})
         return Response(final_list,status=status.HTTP_200_OK)
 from django.core.mail import send_mail
 class OrderDelivered(APIView):
@@ -672,3 +678,49 @@ class GetStatistics(APIView):
 #             return Response(data,status=status.HTTP_200_OK)
 #         except:
 #             return Response({"success":False})
+
+#import requests
+#import json
+#
+## import checksum generation utility
+## You can get this utility from https://developer.paytm.com/docs/checksum/
+#from . import paytmchecksum
+#
+#class PaymentGateway(APIView):
+#    def post(self,request):
+#        
+#
+#        paytmParams = dict()
+#
+#        paytmParams["body"] = {
+#            "requestType"   : "Payment",
+#            "mid"           : "afsfsadfsadfsadf",
+#            "websiteName"   : "https://dacanteen.pythonanywhere.com/",
+#            "orderId"       : "ORDERID_98765",
+#            "callbackUrl"   : "https://dacanteen.pythonanywhere.com/home",
+#            "txnAmount"     : {
+#                "value"     : "1.00",
+#                "currency"  : "INR",
+#            },
+#            "userInfo"      : {
+#                "custId"    : "CUST_001",
+#            },
+#        }
+#
+#        # Generate checksum by parameters we have in body
+#        # Find your Merchant Key in your Paytm Dashboard at https://dashboard.paytm.com/next/apikeys 
+#        # checksum = PaytmChecksum.generateSignature(json.dumps(paytmParams["body"]), "YOUR_MERCHANT_KEY")
+#
+#        paytmParams["head"] = {
+#            "signature"    : "asdklfjhaskldfhlkjashdfl"
+#        }
+#
+#        post_data = json.dumps(paytmParams)
+#
+#        # for Staging
+#        url = "https://securegw-stage.paytm.in/theia/api/v1/initiateTransaction?mid=as5fsf54dsf5445dfsa54&orderId=ORDERID_98765"
+#
+#        # for Production
+#        # url = "https://securegw.paytm.in/theia/api/v1/initiateTransaction?mid=YOUR_MID_HERE&orderId=ORDERID_98765"
+#        response = requests.post(url, data = post_data, headers = {"Content-type": "application/json"}).json()
+#        print(response)
