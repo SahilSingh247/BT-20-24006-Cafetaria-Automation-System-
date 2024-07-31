@@ -28,6 +28,7 @@ urlpatterns = [
     path('confirm-order', views.ConfirmOrder.as_view(), name='confirm-order'),
     path('order-delivered', views.OrderDelivered.as_view(), name='order-delivered'),
     path('see-feedback', views.seefeedback.as_view(), name='see-feedback'),
+    #path('send-payment', views.PaymentGateway.as_view(), name='send-payment'),
     path('cust-pending-orders', views.CustPendingOrders.as_view(), name='cust-pending-orders'),
     path('cust-delivered-orders', views.CustDeliveredOrders.as_view(), name='cust-delivered-orders'),
     path('get-statistics',views.GetStatistics.as_view(),name = 'get-statistics'),
